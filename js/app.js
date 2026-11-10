@@ -53,9 +53,12 @@ export async function route() {
     for (const a of topbar.querySelectorAll('[data-nav]')) a.classList.toggle('active', a.dataset.nav === r.nav);
     document.title = r.title ? `${r.title} · Senhas de Atendimento` : 'Senhas de Atendimento';
 
-    mount(app, h('p', { class: 'muted' }, 'Carregando…'));
+    // Cada tela desenha no próprio contêiner: atualizações atrasadas de uma
+    // tela que já saiu caem num elemento fora da página.
+    const root = h('div', { class: 'view' }, h('p', { class: 'muted' }, 'Carregando…'));
+    mount(app, root);
     try {
-        const c = await r.view(app, ...m.slice(1));
+        const c = await r.view(root, ...m.slice(1));
         if (seq !== routeSeq) { if (typeof c === 'function') c(); return; }
         cleanup = typeof c === 'function' ? c : null;
     } catch (e) {

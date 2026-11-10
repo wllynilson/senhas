@@ -48,8 +48,10 @@ export async function viewTrack(app, code) {
                 called ? h('p', { style: 'font-size:1.6rem;font-weight:800;margin:.5rem 0 0' }, `Dirija-se ao ${t.counter}`) : null),
             t.status === 'waiting'
                 ? h('div', { class: 'card' },
-                    h('div', { class: 'ahead' }, t.ahead),
-                    h('div', { class: 'muted' }, t.ahead === 1 ? 'pessoa na sua frente' : 'pessoas na sua frente'),
+                    t.ahead === 0
+                        ? h('div', { class: 'status' }, 'Você é o próximo!')
+                        : [h('div', { class: 'ahead' }, t.ahead),
+                            h('div', { class: 'muted' }, t.ahead === 1 ? 'pessoa na sua frente' : 'pessoas na sua frente')],
                     h('p', { class: 'small muted', style: 'margin:.75rem 0 0' }, 'Esta página se atualiza sozinha. Deixe-a aberta para ser avisado.'))
                 : null,
             open ? soundBtn : null,

@@ -83,7 +83,8 @@ export async function viewTotem(app, token) {
                     h('div', { class: 'code', 'aria-label': `Sua senha: ${t.code}` }, t.code),
                     t.preferential ? h('span', { class: 'badge pref' }, 'Preferencial') : null,
                     h('p', { style: 'margin-top:.75rem;font-weight:600' }, ahead),
-                    qrSvg(url, 'QR code para acompanhar a senha no celular'),
+                    h('a', { href: url, target: '_blank', rel: 'noopener', title: 'Abrir o acompanhamento', class: 'qr-link' },
+                        qrSvg(url, 'QR code para acompanhar a senha no celular')),
                     h('p', { class: 'small muted' }, 'Aponte a câmera do celular para acompanhar sua senha e ser avisado quando for chamado.'),
                     h('div', { class: 'row', style: 'justify-content:center' }, print, done))),
             // Cupom para impressora térmica (só aparece ao imprimir)

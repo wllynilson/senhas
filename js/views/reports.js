@@ -32,13 +32,16 @@ export async function viewReports(app) {
 
     function render(r, from, to) {
         const t = r.totals;
+        const seed = h('button', { class: 'btn primary', type: 'button' }, 'Gerar histórico de exemplo');
+        seed.addEventListener('click', () => busy(seed, async () => {
+            const n = await rpc('seed_demo_history', { p_days: 30 });
+            toast(`${fmtInt(n)} senhas de exemplo geradas`);
+            if (span === 0) span = 13;
+            renderSeg();
+            await load();
+        }));
+        const noHistory = !r.by_day.some((d) => d.day < to);
         if (!t.issued) {
-            const seed = h('button', { class: 'btn primary', type: 'button' }, 'Gerar histórico de exemplo');
-            seed.addEventListener('click', () => busy(seed, async () => {
-                const n = await rpc('seed_demo_history', { p_days: 30 });
-                toast(`${fmtInt(n)} senhas de exemplo geradas`);
-                await load();
-            }));
             mount(body, h('div', { class: 'card empty' },
                 h('p', {}, 'Nenhuma senha neste período.'),
                 h('p', { class: 'small' }, 'Para ver os relatórios em ação, gere 30 dias de movimento fictício.'),
@@ -59,6 +62,10 @@ export async function viewReports(app) {
         for (let hr = Math.min(8, ...hs); hr <= Math.max(17, ...hs); hr++) hours.push({ hour: hr, issued: byHour.get(hr) || 0 });
 
         mount(body,
+            noHistory && span > 0
+                ? h('div', { class: 'notice row spread' },
+                    h('span', {}, 'Só há senhas de hoje. Gere 30 dias de movimento fictício para ver os gráficos completos.'), seed)
+                : null,
             h('div', { class: 'kpis' },
                 kpi('Senhas emitidas', fmtInt(t.issued)),
                 kpi('Atendidas', fmtInt(t.done)),

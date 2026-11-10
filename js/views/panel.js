@@ -10,6 +10,7 @@ export async function viewPanel(app, token) {
     const seen = new Set();
     const queue = [];
     let speaking = false;
+    let alive = true;
 
     const clock = h('div', { class: 'clock', 'aria-label': 'Hora atual' });
     const tick = () => { clock.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
@@ -36,7 +37,7 @@ export async function viewPanel(app, token) {
     async function processQueue() {
         if (speaking) return;
         speaking = true;
-        while (queue.length) {
+        while (alive && queue.length) {
             const c = queue.shift();
             flashId = c.id;
             render();
@@ -97,6 +98,7 @@ export async function viewPanel(app, token) {
     await refresh();
     const stop = live(token, refresh, { pollMs: 10000 });
     return () => {
+        alive = false;
         stop();
         clearInterval(clockTimer);
         if ('speechSynthesis' in window) speechSynthesis.cancel();

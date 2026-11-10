@@ -91,6 +91,7 @@ select t.as_user('00000000-0000-0000-0000-00000000000a');
 select public.seed_demo_history(14) as seeded \gset
 select t.eq(:seeded > 300, true, 'histórico gerado');
 select t.fails('select public.seed_demo_history(14)', 'histórico só uma vez');
+select t.eq((select count(distinct n) > 3 from (select count(*) n from public.tickets group by service_day) x), true, 'quantidade varia por dia');
 select public.report(current_date - 30, current_date) as rep \gset
 select t.eq(((:'rep'::jsonb)->'totals'->>'issued')::int, :seeded + 4, 'total no relatório');
 select t.eq(jsonb_array_length((:'rep'::jsonb)->'by_service'), 3, 'por serviço');

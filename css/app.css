@@ -289,3 +289,4 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
     .print-ticket .p-qr { width: 32mm; margin: 3mm auto 1mm; }
     .print-ticket .p-small { font-size: 8pt; }
 }
+.qr-link { display: block; width: fit-content; margin: 0 auto; }

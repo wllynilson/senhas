@@ -402,7 +402,10 @@ begin
                (3 + random() * 12) * interval '1 minute' as dur,
                1 + floor(random() * 3)::int as counter_no
           from days
-         cross join lateral generate_series(1, 40 + floor(random() * 50)::int) gs
+         -- quantidade sorteada por dia (a referência a days.day obriga o
+         -- sorteio a cada linha); segunda mais cheia, sábado mais vazio
+         cross join lateral generate_series(1, ((45 + random() * 35)
+             * case extract(isodow from days.day) when 1 then 1.3 when 5 then 0.9 when 6 then 0.5 else 1 end)::int) gs
     ), j as (
         select raw.*, svc.id as service_id, svc.prefix,
                ((raw.day + time '08:00') + raw.mins * interval '1 minute'

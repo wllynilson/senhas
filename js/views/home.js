@@ -22,7 +22,12 @@ function landing(app) {
     start.addEventListener('click', () => busy(start, async () => {
         if (!state.session) {
             const { data, error } = await supabase.auth.signInAnonymously();
-            if (error) throw error;
+            if (error) {
+                if (/anonymous sign-ins are disabled/i.test(error.message)) {
+                    throw new Error('A demonstração está temporariamente indisponível (login anônimo desativado no servidor).');
+                }
+                throw error;
+            }
             state.session = data.session;
         }
         await rpc('create_demo_unit', { p_name: 'Unidade de demonstração' });
