@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Senhas de Atendimento</title>
+    <meta name="description" content="Sistema de senhas de atendimento: totem, guichê, painel com voz, acompanhamento por QR code e relatórios. Demonstração por Wllynilson Pereira.">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#0f766e">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f766e'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='15' fill='white' text-anchor='middle'%3EA1%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
+    <script type="module" src="js/app.js"></script>
+</head>
+<body>
+    <header class="topbar" id="topbar" hidden>
+        <a class="brand" href="#/"><span class="brand-mark">A1</span><span>Senhas</span></a>
+        <nav class="nav" aria-label="Principal">
+            <a href="#/" data-nav="home">Início</a>
+            <a href="#/guiche" data-nav="guiche">Guichê</a>
+            <a href="#/relatorios" data-nav="relatorios">Relatórios</a>
+            <a href="#/config" data-nav="config">Configurar</a>
+        </nav>
+    </header>
+    <main id="app" aria-live="polite"></main>
+    <div id="toast" role="status" hidden></div>
+</body>
+</html>
