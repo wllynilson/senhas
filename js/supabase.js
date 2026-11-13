@@ -1,8 +1,10 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+// Cliente do Supabase. A biblioteca vem de js/vendor (carregada em index.html),
+// e não de uma CDN: assim a Content-Security-Policy pode proibir código de fora.
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
-export const isConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+const lib = window.supabase;
+export const isConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && lib);
 
 export const supabase = isConfigured
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } })
+    ? lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } })
     : null;

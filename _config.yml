@@ -1,1 +1,3 @@
+# Só o site estático vai para o GitHub Pages; o schema e a Edge Function ficam no repositório.
 exclude: [supabase, README.md]
+include: [sw.js, manifest.webmanifest, icon.svg]

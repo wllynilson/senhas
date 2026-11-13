@@ -5,14 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Senhas de Atendimento</title>
     <meta name="description" content="Sistema de senhas de atendimento: totem, guichê, painel com voz, acompanhamento por QR code e relatórios. Demonstração por Wllynilson Pereira.">
+    <!-- Só carrega código deste domínio. connect-src precisa do projeto do
+         Supabase: ao trocar o projeto em js/config.js, troque aqui também. -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'none';
+        script-src 'self';
+        style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+        font-src https://fonts.gstatic.com;
+        img-src 'self' data:;
+        connect-src 'self' https://znuwlbfmwocgmkxlrnto.supabase.co wss://znuwlbfmwocgmkxlrnto.supabase.co;
+        manifest-src 'self';
+        worker-src 'self';
+        base-uri 'none';
+        form-action 'none'">
     <meta name="referrer" content="no-referrer">
     <meta name="theme-color" content="#0f766e">
+    <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f766e'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='15' fill='white' text-anchor='middle'%3EA1%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/app.css">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
+    <!-- Bibliotecas guardadas no próprio repositório: nada vem de CDN -->
+    <script src="js/vendor/qrcode-generator-1.4.4.js" defer></script>
+    <script src="js/vendor/supabase-js-2.45.4.js" defer></script>
     <script type="module" src="js/app.js"></script>
 </head>
 <body>
@@ -26,6 +42,7 @@
         </nav>
     </header>
     <main id="app" aria-live="polite"></main>
+    <div id="offline" role="status" hidden>Sem conexão. Tentando reconectar…</div>
     <div id="toast" role="status" hidden></div>
 </body>
 </html>

@@ -1,0 +1,19 @@
+{
+    "name": "Senhas de Atendimento",
+    "short_name": "Senhas",
+    "description": "Acompanhe sua senha de atendimento e seja avisado quando for chamado.",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#f6f7f7",
+    "theme_color": "#0f766e",
+    "lang": "pt-BR",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

@@ -4,11 +4,11 @@ import { state, loadUnit, route } from '../app.js';
 import { appUrl, busy, h, mount, qrSvg, rpc, toast } from '../lib.js';
 
 const FEATURES = [
-    ['🎫', 'Totem de senhas', 'Escolha do serviço, senha normal ou preferencial, impressão em cupom e QR code.'],
+    ['🎫', 'Totem de senhas', 'Escolha do serviço e do tipo de atendimento (normal, prioritário, 80+ ou doador), impressão em cupom e QR code.'],
     ['🖥️', 'Painel com voz', 'Senha e guichê em destaque, histórico de chamadas e anúncio falado.'],
     ['🧑‍💼', 'Guichê do atendente', 'Chamar próxima, rechamar, finalizar ou marcar ausência, com atalhos de teclado.'],
-    ['📱', 'Acompanhe no celular', 'Pelo QR code: posição na fila e aviso quando for chamado.'],
-    ['📊', 'Relatórios', 'Senhas por dia e por hora, espera média e tempo de atendimento.'],
+    ['📱', 'Acompanhe no celular', 'Pelo QR code: posição na fila, espera estimada e aviso quando for chamado.'],
+    ['📊', 'Relatórios', 'Senhas por dia e por hora, espera média, percentis, meta e exportação.'],
     ['⚡', 'Tempo real', 'Todas as telas se atualizam na hora, em qualquer dispositivo.'],
 ];
 
@@ -40,7 +40,7 @@ function landing(app) {
         h('section', { class: 'hero' },
             h('div', { class: 'eyebrow' }, 'Demonstração'),
             h('h1', {}, 'Senhas de atendimento, do totem ao painel'),
-            h('p', {}, 'Organize filas de atendimento com serviços, prioridade legal para preferenciais, painel com voz e relatórios. Experimente: você ganha uma unidade só sua, sem cadastro.'),
+            h('p', {}, 'Organize filas de atendimento com serviços, prioridades da lei (incluindo 80+ e doadores), painel com voz e relatórios. Experimente: você ganha uma unidade só sua, sem cadastro.'),
             h('div', { class: 'row' }, start, h('a', { class: 'btn ghost', href: 'https://wllynilson.com.br' }, 'Sobre o autor'))),
         h('section', { class: 'grid grid-3' },
             FEATURES.map(([icon, title, text]) => h('div', { class: 'card feature' },
@@ -51,8 +51,9 @@ function landing(app) {
 
 function dashboard(app) {
     const u = state.unit;
+    // o painel fica exposto numa TV: usa o token que só lê
     const totemUrl = appUrl(`/totem/${u.kiosk_token}`);
-    const panelUrl = appUrl(`/painel/${u.kiosk_token}`);
+    const panelUrl = appUrl(`/painel/${u.display_token}`);
 
     const device = (title, text, url, qrLabel) => h('div', { class: 'card device' },
         h('h3', {}, title),
@@ -74,8 +75,8 @@ function dashboard(app) {
                 h('li', {}, 'Tire senhas no totem: aqui ou no celular, lendo o QR code.'),
                 h('li', {}, 'No guichê, clique em “Chamar próxima” e ouça o painel anunciar.'))),
         h('div', { class: 'grid grid-3' },
-            device('Totem', 'Para a recepção ou um tablet. Leia o QR para abrir no celular.', totemUrl, 'QR code do totem'),
-            device('Painel (TV)', 'Mostra as chamadas com som e voz. Ideal em tela cheia.', panelUrl, 'QR code do painel'),
+            device('Totem', 'Para a recepção ou um tablet. Quem tem este link emite senhas.', totemUrl, 'QR code do totem'),
+            device('Painel (TV)', 'Mostra as chamadas com som e voz. Este link só lê.', panelUrl, 'QR code do painel'),
             h('div', { class: 'card device' },
                 h('h3', {}, 'Guichê e gestão'),
                 h('p', { class: 'muted small', style: 'margin:0' }, 'Para o atendente, neste navegador. Abra várias abas para simular mais guichês.'),
@@ -83,7 +84,8 @@ function dashboard(app) {
                 h('a', { class: 'btn', href: '#/relatorios' }, 'Ver relatórios'),
                 h('a', { class: 'btn', href: '#/config' }, 'Configurar serviços'))),
         h('p', { class: 'footer' },
-            'Quem tem os links do totem e do painel pode tirar senhas e ver as chamadas, como no balcão físico. ',
+            'Quem tem o link do totem pode tirar senhas, como no balcão físico; o do painel só mostra as chamadas. ',
+            'Dá para trocar os dois em Configurar. ',
             'Projeto de ', h('a', { href: 'https://wllynilson.com.br' }, 'Wllynilson Pereira'), '.'));
 }
 

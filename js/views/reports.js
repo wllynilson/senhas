@@ -1,6 +1,7 @@
-// Relatórios: indicadores, senhas por dia e por hora, tabela por serviço.
+// Relatórios: indicadores, senhas por dia e por hora, tabelas por serviço e
+// por guichê, exportação em CSV.
 import { state } from '../app.js';
-import { addDays, busy, fmtDayShort, fmtDuration, fmtInt, fmtWeekday, h, mount, rpc, toast, todayIn } from '../lib.js';
+import { addDays, busy, downloadCsv, fmtDayShort, fmtDuration, fmtInt, fmtWeekday, h, mount, rpc, toast, todayIn } from '../lib.js';
 
 const PERIODS = [['Hoje', 0], ['7 dias', 6], ['14 dias', 13], ['30 dias', 29]];
 const SVG = 'http://www.w3.org/2000/svg';
@@ -49,17 +50,35 @@ export async function viewReports(app) {
             return;
         }
 
-        const kpi = (label, value) => h('div', { class: 'card kpi' }, h('div', { class: 'value' }, value), h('div', { class: 'label' }, label));
+        const kpi = (label, value, hint) => h('div', { class: 'card kpi' },
+            h('div', { class: 'value' }, value),
+            h('div', { class: 'label' }, label),
+            hint ? h('div', { class: 'label' }, hint) : null);
         const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
 
         // dias do período sem senha aparecem zerados
         const byDay = new Map(r.by_day.map((d) => [d.day, d]));
         const days = [];
         for (let d = from; d <= to; d = addDays(d, 1)) days.push(byDay.get(d) || { day: d, issued: 0, done: 0, avg_wait: null });
-        const byHour = new Map(r.by_hour.map((x) => [x.hour, x.issued]));
+        const byHour = new Map(r.by_hour.map((x) => [x.hour, x]));
         const hours = [];
         const hs = r.by_hour.map((x) => x.hour);
-        for (let hr = Math.min(8, ...hs); hr <= Math.max(17, ...hs); hr++) hours.push({ hour: hr, issued: byHour.get(hr) || 0 });
+        for (let hr = Math.min(8, ...hs); hr <= Math.max(17, ...hs); hr++) {
+            hours.push(byHour.get(hr) || { hour: hr, issued: 0, avg_wait: null });
+        }
+
+        const exportBtn = h('button', { class: 'btn', type: 'button' }, '⬇️ Exportar CSV');
+        exportBtn.addEventListener('click', () => downloadCsv(`senhas-${from}-a-${to}.csv`, [
+            ['Dia', 'Emitidas', 'Atendidas', 'Espera média (s)'],
+            ...days.map((d) => [d.day, d.issued, d.done, d.avg_wait ?? '']),
+            [],
+            ['Serviço', 'Emitidas', 'Atendidas', 'Ausentes', 'Prioritárias', 'Espera média (s)', 'Espera p90 (s)', 'Atendimento médio (s)'],
+            ...r.by_service.map((s) => [`${s.prefix} · ${s.name}`, s.issued, s.done, s.no_show, s.priority,
+                s.avg_wait ?? '', s.p90_wait ?? '', s.avg_service ?? '']),
+            [],
+            ['Guichê', 'Atendimentos', 'Ausentes', 'Atendimento médio (s)'],
+            ...r.by_counter.map((c) => [c.name, c.served, c.no_show, c.avg_service ?? '']),
+        ]));
 
         mount(body,
             noHistory && span > 0
@@ -70,9 +89,15 @@ export async function viewReports(app) {
                 kpi('Senhas emitidas', fmtInt(t.issued)),
                 kpi('Atendidas', fmtInt(t.done)),
                 kpi('Ausentes', `${fmtInt(t.no_show)} (${pct(t.no_show, t.issued)})`),
-                kpi('Espera média', fmtDuration(t.avg_wait)),
+                kpi('Espera média', fmtDuration(t.avg_wait), `mediana ${fmtDuration(t.p50_wait)}`),
+                kpi('Espera p90', fmtDuration(t.p90_wait), '9 em cada 10 esperam menos'),
+                kpi(`Dentro da meta (${r.wait_target} min)`, pct(t.within_target, t.measured),
+                    `${fmtInt(t.within_target)} de ${fmtInt(t.measured)}`),
                 kpi('Atendimento médio', fmtDuration(t.avg_service)),
-                kpi('Preferenciais', pct(t.preferential, t.issued))),
+                kpi('Prioritárias', pct(t.priority, t.issued)),
+                t.expired ? kpi('Expiradas', fmtInt(t.expired), 'ficaram de dias anteriores') : null),
+            h('div', { class: 'row spread' }, h('span', { class: 'small muted' },
+                `Período de ${fmtDayShort(from)} a ${fmtDayShort(to)}`), exportBtn),
             span > 0
                 ? h('section', { class: 'card' },
                     h('h2', {}, 'Senhas emitidas por dia'),
@@ -87,20 +112,37 @@ export async function viewReports(app) {
                 h('h2', {}, 'Senhas por hora de emissão'),
                 h('p', { class: 'small muted' }, 'Mostra os horários de pico para planejar quantos guichês abrir.'),
                 barChart(hours.map((x) => ({
-                    label: `${x.hour}h`, value: x.issued, tip: `${x.hour}h–${x.hour + 1}h: ${fmtInt(x.issued)} senhas`,
-                })))),
+                    label: `${x.hour}h`, value: x.issued,
+                    tip: `${x.hour}h–${x.hour + 1}h: ${fmtInt(x.issued)} senhas · espera média ${fmtDuration(x.avg_wait)}`,
+                }))),
+                dataTable(['Hora', 'Emitidas', 'Espera média'],
+                    hours.map((x) => [`${x.hour}h`, fmtInt(x.issued), fmtDuration(x.avg_wait)]))),
             h('section', { class: 'card' },
                 h('h2', {}, 'Por serviço'),
                 h('div', { class: 'table-wrap' }, h('table', {},
                     h('thead', {}, h('tr', {},
                         h('th', {}, 'Serviço'), h('th', { class: 'num' }, 'Emitidas'), h('th', { class: 'num' }, 'Atendidas'),
-                        h('th', { class: 'num' }, 'Ausentes'), h('th', { class: 'num' }, 'Preferenciais'),
-                        h('th', { class: 'num' }, 'Espera média'), h('th', { class: 'num' }, 'Atendimento médio'))),
+                        h('th', { class: 'num' }, 'Ausentes'), h('th', { class: 'num' }, 'Prioritárias'),
+                        h('th', { class: 'num' }, 'Espera média'), h('th', { class: 'num' }, 'Espera p90'),
+                        h('th', { class: 'num' }, 'Atendimento médio'))),
                     h('tbody', {}, r.by_service.map((s) => h('tr', {},
                         h('td', {}, `${s.prefix} · ${s.name}`), h('td', { class: 'num' }, fmtInt(s.issued)),
                         h('td', { class: 'num' }, fmtInt(s.done)), h('td', { class: 'num' }, fmtInt(s.no_show)),
-                        h('td', { class: 'num' }, fmtInt(s.preferential)), h('td', { class: 'num' }, fmtDuration(s.avg_wait)),
-                        h('td', { class: 'num' }, fmtDuration(s.avg_service)))))))));
+                        h('td', { class: 'num' }, fmtInt(s.priority)), h('td', { class: 'num' }, fmtDuration(s.avg_wait)),
+                        h('td', { class: 'num' }, fmtDuration(s.p90_wait)),
+                        h('td', { class: 'num' }, fmtDuration(s.avg_service)))))))),
+            r.by_counter.length
+                ? h('section', { class: 'card' },
+                    h('h2', {}, 'Por guichê'),
+                    h('div', { class: 'table-wrap' }, h('table', {},
+                        h('thead', {}, h('tr', {},
+                            h('th', {}, 'Guichê'), h('th', { class: 'num' }, 'Atendimentos'),
+                            h('th', { class: 'num' }, 'Ausentes'), h('th', { class: 'num' }, 'Atendimento médio'))),
+                        h('tbody', {}, r.by_counter.map((c) => h('tr', {},
+                            h('td', {}, c.name), h('td', { class: 'num' }, fmtInt(c.served)),
+                            h('td', { class: 'num' }, fmtInt(c.no_show)),
+                            h('td', { class: 'num' }, fmtDuration(c.avg_service))))))))
+                : null);
     }
 
     await load();

@@ -122,7 +122,7 @@ body.kiosk main { max-width: none; padding: 0; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px; }
 
 label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: .3rem; }
-input[type=text], input[type=date], select {
+input[type=text], input[type=date], input[type=number], select {
     width: 100%; padding: .6rem .75rem; border-radius: 10px; border: 1px solid var(--border);
     background: var(--surface); color: var(--text); font: inherit; min-height: 42px;
 }
@@ -150,6 +150,18 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
     box-shadow: var(--shadow); max-width: calc(100% - 32px); font-weight: 500;
 }
 #toast.error { background: var(--danger); color: #fff; }
+
+/* Aviso de conexão: o totem e o painel ficam horas sozinhos numa tela */
+#offline {
+    position: fixed; left: 0; right: 0; top: 0; z-index: 60; text-align: center;
+    background: var(--danger); color: #fff; padding: .5rem 1rem; font-weight: 600; font-size: .95rem;
+}
+
+dialog {
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+    color: var(--text); max-width: 420px; width: calc(100% - 32px);
+}
+dialog::backdrop { background: rgb(0 0 0 / .45); }
 
 .empty { text-align: center; padding: 2rem 1rem; color: var(--muted); }
 .notice { padding: .9rem 1rem; border-radius: 10px; background: var(--accent-soft); color: var(--text); }
@@ -186,6 +198,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
     background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 1.3rem;
 }
 .totem-btn.pref .letter { background: var(--pref-soft); color: var(--pref); }
+/* tipos de atendimento: o texto da lei é longo, então no máximo duas colunas */
+.totem-kinds { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width: 820px; }
+.totem-kinds .meta { font-size: .9rem; }
 .totem-ticket { text-align: center; max-width: 520px; margin: auto; width: 100%; }
 .totem-ticket .code { font-size: clamp(4rem, 18vw, 7.5rem); line-height: 1; color: var(--accent); margin: .5rem 0; }
 .totem-ticket .qr { width: 180px; margin: 1rem auto; background: #fff; padding: 8px; border-radius: 10px; }
@@ -254,6 +269,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .kpis { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .kpi .value { font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .kpi .label { color: var(--muted); font-size: .85rem; font-weight: 500; }
+.kpi .label + .label { font-size: .75rem; margin-top: .15rem; }
 .chart { position: relative; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .chart .bar { fill: var(--chart); }

@@ -1,5 +1,6 @@
-// Acompanhamento pelo QR code: posição na fila e aviso quando a senha é chamada.
-import { chime, h, live, mount, rpc, unlockAudio } from '../lib.js';
+// Acompanhamento pelo QR code: posição na fila, espera estimada e aviso
+// quando a senha é chamada — na tela, por vibração, som e Web Push.
+import { busy, chime, fmtEta, h, live, mount, priorityShort, pushAvailable, rpc, subscribePush, toast, unlockAudio } from '../lib.js';
 
 const STATUS = {
     waiting: 'Aguardando',
@@ -7,12 +8,14 @@ const STATUS = {
     done: 'Atendimento concluído',
     no_show: 'Senha encerrada (ausente)',
     cancelled: 'Senha cancelada',
+    expired: 'Senha encerrada (dia anterior)',
 };
 
 export async function viewTrack(app, code) {
     let t = null;
     let lastCalls = null;
     let soundOn = false;
+    let pushOn = false;
     const baseTitle = document.title;
 
     const soundBtn = h('button', { class: 'btn', type: 'button' }, '🔔 Ativar alerta sonoro');
@@ -23,6 +26,17 @@ export async function viewTrack(app, code) {
         soundBtn.textContent = '🔔 Alerta sonoro ativado';
         soundBtn.disabled = true;
     });
+
+    // Com a aba em segundo plano o celular congela a página: só o Web Push
+    // garante o aviso de quem guardou o telefone no bolso.
+    const pushBtn = h('button', { class: 'btn primary', type: 'button' }, '📲 Avisar quando chegar minha vez');
+    pushBtn.addEventListener('click', () => busy(pushBtn, async () => {
+        await subscribePush(code);
+        pushOn = true;
+        pushBtn.textContent = '📲 Você será avisado';
+        pushBtn.disabled = true;
+        toast('Pronto: avisamos mesmo com a tela desligada.');
+    }));
 
     function alertCalled() {
         navigator.vibrate?.([300, 150, 300, 150, 600]);
@@ -39,10 +53,11 @@ export async function viewTrack(app, code) {
         }
         const called = t.status === 'called';
         const open = t.status === 'waiting' || called;
+        const pref = priorityShort(t.priority);
         mount(app, h('div', { class: 'track stack' },
             h('div', { class: 'muted' }, t.unit),
             h('div', { class: `card${called ? ' called' : ''}` },
-                h('div', {}, t.service, t.preferential ? ' · Preferencial' : ''),
+                h('div', {}, t.service, pref ? ` · ${pref}` : ''),
                 h('div', { class: 'code' }, t.code),
                 h('div', { class: 'status', role: 'status' }, STATUS[t.status] || t.status),
                 called ? h('p', { style: 'font-size:1.6rem;font-weight:800;margin:.5rem 0 0' }, `Dirija-se ao ${t.counter}`) : null),
@@ -52,8 +67,10 @@ export async function viewTrack(app, code) {
                         ? h('div', { class: 'status' }, 'Você é o próximo!')
                         : [h('div', { class: 'ahead' }, t.ahead),
                             h('div', { class: 'muted' }, t.ahead === 1 ? 'pessoa na sua frente' : 'pessoas na sua frente')],
+                    h('div', { class: 'muted', style: 'margin-top:.5rem' }, 'Espera estimada: ', h('b', {}, fmtEta(t.eta))),
                     h('p', { class: 'small muted', style: 'margin:.75rem 0 0' }, 'Esta página se atualiza sozinha. Deixe-a aberta para ser avisado.'))
                 : null,
+            open && pushAvailable && !pushOn ? pushBtn : null,
             open ? soundBtn : null,
             h('p', { class: 'small muted' }, 'Senhas de Atendimento · demonstração')));
     }
@@ -67,6 +84,7 @@ export async function viewTrack(app, code) {
     };
 
     await refresh();
-    const stop = live(null, refresh, { pollMs: 5000 });
+    // o banco avisa no canal desta senha; a consulta periódica é a reserva
+    const stop = live(`ticket:${code}`, refresh, { pollMs: 30000 });
     return () => { stop(); document.title = baseTitle; };
 }

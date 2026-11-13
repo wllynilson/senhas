@@ -1,5 +1,5 @@
 // Painel (TV): senha atual em destaque, últimas chamadas e anúncio com som e voz.
-import { chime, h, live, mount, rpc, speak, spokenCall, unlockAudio } from '../lib.js';
+import { chime, h, live, mount, priorityShort, rpc, speak, spokenCall, unlockAudio } from '../lib.js';
 
 export async function viewPanel(app, token) {
     let st = null;
@@ -59,7 +59,8 @@ export async function viewPanel(app, token) {
                 ? [h('div', { class: 'label' }, 'Senha'),
                     h('div', { class: 'code' }, current.code),
                     h('div', { class: 'counter' }, current.counter),
-                    h('div', { class: 'service' }, current.service, current.preferential ? ' · Preferencial' : '')]
+                    h('div', { class: 'service' }, current.service,
+                        priorityShort(current.priority) ? ` · ${priorityShort(current.priority)}` : '')]
                 : [h('div', { class: 'label' }, 'Aguardando'), h('div', { class: 'service' }, 'Nenhuma senha chamada hoje')]);
         if (current && flashId === current.id) {
             currentEl.classList.add('flash');
@@ -96,7 +97,7 @@ export async function viewPanel(app, token) {
     };
 
     await refresh();
-    const stop = live(token, refresh, { pollMs: 10000 });
+    const stop = live(`unit:${token}`, refresh, { pollMs: 10000 });
     return () => {
         alive = false;
         stop();
